@@ -1,0 +1,45 @@
+Using data from  /home/dhimal/gmu/cs657/data/sparkify_event_data.json
+                         page
+0                      Cancel
+1            Submit Downgrade
+2                 Thumbs Down
+3                        Home
+4                   Downgrade
+5                 Roll Advert
+6                      Logout
+7               Save Settings
+8   Cancellation Confirmation
+9                       About
+10        Submit Registration
+11                   Settings
+12                      Login
+13                   Register
+14            Add to Playlist
+15                 Add Friend
+16                   NextSong
+17                  Thumbs Up
+18                       Help
+19                    Upgrade
+20                      Error
+21             Submit Upgrade
+               artist       auth  ...   userId churn
+0            Coldplay  Logged In  ...  1000280     1
+1  Charttraxx Karaoke  Logged In  ...  1000280     1
+2        Dixie Chicks  Logged In  ...  1000280     1
+3             Erasure  Logged In  ...  1000280     1
+4      Britney Spears  Logged In  ...  1000280     1
+5             Phoenix  Logged In  ...  1000280     1
+6                None  Logged In  ...  1000280     1
+7            Al Green  Logged In  ...  1000280     1
+8   Brotha Lynch Hung  Logged In  ...  1000280     1
+9    Five Iron Frenzy  Logged In  ...  1000280     1
+
+[10 rows x 19 columns]
+The total number of users: 22278
+The total number of churners are: 5382467
+Number of users in the data:  22278
+Gradient Boosted Trees Metrics:
+Accuracy: 0.834681042228212
+F1 Score:0.8157862881879755
+Total time to run Script: 958.5459630489349 seconds
+Total time to run Script: 15.975766050815583 minutes
