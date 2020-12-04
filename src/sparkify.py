@@ -19,7 +19,7 @@ from pyspark.ml.tuning import CrossValidator, ParamGridBuilder
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.functions import sum as Fsum, col
-from pyspark.sql.types import IntegerType
+from pyspark.sql.types import IntegerType, DoubleType
 from pyspark.sql.window import Window
 
 DATA_FILE_MINI = "../data/mini_sparkify_event_data.json"
@@ -69,7 +69,7 @@ def add_features(data):
         .groupBy('userId') \
         .agg({'lifetime': 'max'}) \
         .withColumnRenamed('max(lifetime)', 'lifetime') \
-        .select('userId', (col('lifetime') / 1000 / 3600 / 24).alias('lifetime'))
+        .select('userId', (col('lifetime') / 3600 / 24).alias('lifetime'))
 
     # total songs listened
     total_songs_listened = data \
@@ -168,6 +168,17 @@ def main(
     print("Using data from ", DATA_FILE, file=outFile)
     spark = init_spark()
     data = read_data(spark)
+
+    # userId, registration, ts, song, page
+    data = data.drop(*['artist', 'firstName', 'lastName', 'id_copy'])
+    data = data.dropna(how='any', subset=['userId'])
+    data = data.filter(data["userId"] != "")
+    data = data.filter(data['userId'].isNotNull())
+
+    # milliseconds to microseconds
+    time_unit_udf = F.udf(lambda x: x/1000, DoubleType())
+    data = data.withColumn("registration", time_unit_udf("registration"))
+    data = data.withColumn("ts", time_unit_udf("ts"))
     '''
     Adding churn column to each instance
     '''
@@ -273,7 +284,7 @@ if __name__ == "__main__":
     maxIter = 5
 
     # to use the full dataset
-    DATA_FILE = DATA_FILE_FULL
+    DATA_FILE = DATA_FILE_MINI
 
     time_stamp = str(int(time.time()))
     out_file_name = '../out/output-' + time_stamp + '.txt'
