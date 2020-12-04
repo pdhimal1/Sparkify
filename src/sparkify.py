@@ -12,8 +12,8 @@ https://udacity-dsnd.s3.amazonaws.com/sparkify/mini_sparkify_event_data.json
 '''
 import time
 
-from pyspark.ml.classification import GBTClassifier
-from pyspark.ml.evaluation import MulticlassClassificationEvaluator
+from pyspark.ml.classification import GBTClassifier, LogisticRegression
+from pyspark.ml.evaluation import MulticlassClassificationEvaluator, BinaryClassificationEvaluator
 from pyspark.ml.feature import StandardScaler, VectorAssembler
 from pyspark.ml.tuning import CrossValidator, ParamGridBuilder
 from pyspark.sql import SparkSession
@@ -22,7 +22,9 @@ from pyspark.sql.functions import sum as Fsum, col
 from pyspark.sql.types import IntegerType
 from pyspark.sql.window import Window
 
-DATA_FILE = "../data/mini_sparkify_event_data.json"
+DATA_FILE_MINI = "../data/mini_sparkify_event_data.json"
+DATA_FILE_FULL = "../../../data/sparkify_event_data.json"
+DATA_FILE = DATA_FILE_MINI
 
 
 def init_spark():
@@ -145,6 +147,16 @@ def get_model(maxIter, crossValidation=False, folds=3):
         return GBTClassifier(maxIter=maxIter, seed=42)
 
 
+def logistic_regression(train, test):
+    lr = LogisticRegression(featuresCol="scaled_features", labelCol="churned_num")
+    lr = lr.fit(train)
+
+    predictions = lr.transform(test)
+    evaluator = BinaryClassificationEvaluator(labelCol='churned_num')
+
+    print('Logistic regresstion, test set, Area Under ROC', evaluator.evaluate(predictions))
+
+
 def main(
         outFile,
         timeStamp,
@@ -152,18 +164,33 @@ def main(
         maxIter=5,
         folds=3):
     time_start = time.time()
+    print("Using data from ", DATA_FILE)
+    print("Using data from ", DATA_FILE, file=outFile)
     spark = init_spark()
     data = read_data(spark)
+    '''
+    Adding churn column to each instance
+    '''
     data = add_churn_column(data)
     # to show the different pages that the users are looking at
-    data.select("page").dropDuplicates().show()
-    print(data.select("page").dropDuplicates().toPandas(), file=outFile)
-    print(data.show(vertical=True), file=outFile)
+    pages = data.select("page").dropDuplicates()
+    pages.show()
+    print(pages.toPandas(), file=outFile)
+    print(data.limit(10).toPandas(), file=outFile)
 
+    unique_userIDs = data.select("userID").dropDuplicates().count()
+    print("The total number of users:", unique_userIDs)
+    print("The total number of users:", unique_userIDs, file=outFile)
+
+    # todo - look at this
     total_churners = data.agg(Fsum("churn")).collect()[0][0]
     print("The total number of churners are:", total_churners)
     print("The total number of churners are:", total_churners, file=outFile)
 
+    '''
+    Each users are assigned a label
+    
+    '''
     label_per_user = get_label_per_user(data)
     column_names, features = add_features(data)
 
@@ -171,21 +198,26 @@ def main(
     while len(features) > 0:
         data = data.join(features.pop(), 'userID', 'outer')
 
-    data = data.join(label_per_user, 'userID', 'outer').drop("userID").fillna(0)
-    data.show(vertical=True)
+    data = data.join(label_per_user, 'userID', 'outer').fillna(0)
+    data.show(vertical=True, n=2)
 
     # Vector assembler
     assembler = VectorAssembler(inputCols=column_names, outputCol="unScaled_features")
     data = assembler.transform(data)
 
     # let go of all the feature columns
-    data = data.select('unScaled_features', 'label')
-    data.show(vertical=True)
+    data.show(vertical=True, n=2)
+    data = data.select('userID', 'unScaled_features', 'label')
+    data.show(vertical=True, n=2)
 
     # scale the features
     scaler = StandardScaler(inputCol="unScaled_features", outputCol="features", withStd=True)
     scalerModel = scaler.fit(data)
     data = scalerModel.transform(data)
+
+    print("Data transformation is complete ...")
+    print("Number of users in the data: ", data.count())
+    print("Number of users in the data: ", data.count(), file=outFile)
 
     # train test split
     trainTest = data.randomSplit([0.8, 0.2])
@@ -200,7 +232,9 @@ def main(
     cvModel_GradBoostTree = model.fit(trainingDF)
     # cvModel_GradBoostTree.avgMetrics
     results_GradBoostTree = cvModel_GradBoostTree.transform(testDF)
-    results_GradBoostTree.show()
+    # todo -    rawPrediction|         probability  ?
+    results_GradBoostTree = results_GradBoostTree.select('userID', 'label', 'prediction')
+    results_GradBoostTree.show(10)
 
     if crossValidation:
         print("Best model selected from cross validation:\n", cvModel_GradBoostTree.bestModel)
@@ -221,20 +255,25 @@ def main(
     print("Total time to run Script: {} seconds".format(time_end - time_start), file=outFile)
     print("Total time to run Script: {} minutes".format((time_end - time_start) / 60), file=outFile)
 
-    # todo  save the prediciton file?
     print(results_GradBoostTree.count())
+    if results_GradBoostTree.count() > 1000:
+        file_name = '../out/predictions-' + timeStamp + '.csv'
+        results_GradBoostTree.write.option("header", "true").csv(file_name)
     spark.stop()
 
 
 if __name__ == "__main__":
     # cross validation
-    crossValidation = True
+    crossValidation = False
     folds = 3
 
     # gradient boost trees
     # Best model selected from cross validation:
     # GBTClassificationModel: uid = GBTClassifier_ecaf70bbfc1e, numTrees=20, numClasses=2, numFeatures=5
     maxIter = 5
+
+    # to use the full dataset
+    DATA_FILE = DATA_FILE_FULL
 
     time_stamp = str(int(time.time()))
     out_file_name = '../out/output-' + time_stamp + '.txt'
