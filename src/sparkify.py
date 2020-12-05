@@ -12,7 +12,7 @@ https://udacity-dsnd.s3.amazonaws.com/sparkify/mini_sparkify_event_data.json
 '''
 import time
 
-from pyspark.ml.classification import GBTClassifier, LogisticRegression
+from pyspark.ml.classification import GBTClassifier, LogisticRegression, LinearSVC
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator, BinaryClassificationEvaluator
 from pyspark.ml.feature import StandardScaler, VectorAssembler
 from pyspark.ml.tuning import CrossValidator, ParamGridBuilder
@@ -115,7 +115,7 @@ def add_features(data):
                   referring_friends]
 
 
-def create_cross_validator(folds=3):
+def create_cross_validator_GBT(folds=3):
     # initialize classifier
     GradBoostTree = GBTClassifier()
 
@@ -139,23 +139,77 @@ def create_cross_validator(folds=3):
     return cross_validator
 
 
-def get_model(maxIter, crossValidation=False, folds=3):
+def get_model_GBT(maxIter, crossValidation=False, folds=3):
     if crossValidation:
-        cross_validator = create_cross_validator(folds=folds)
+        cross_validator = create_cross_validator_GBT(folds=folds)
         return cross_validator
     else:
         return GBTClassifier(maxIter=maxIter, seed=42)
 
 
-def logistic_regression(train, test):
-    lr = LogisticRegression(featuresCol="scaled_features", labelCol="churned_num")
-    lr = lr.fit(train)
+def create_cross_validator_LGR(folds=3):
+    lgr = LogisticRegression()
 
-    predictions = lr.transform(test)
-    evaluator = BinaryClassificationEvaluator(labelCol='churned_num')
+    # We use a ParamGridBuilder to construct a grid of parameters to search over
+    iterations = [10, 20, 30]
+    regParam = [0.1, 0.2, 0.3]
+    elasticNetParam = [0.7, 0.8, 0.9]
 
-    print('Logistic regresstion, test set, Area Under ROC', evaluator.evaluate(predictions))
+    paramGrid = ParamGridBuilder()\
+        .addGrid(lgr.maxIter, iterations)\
+        .addGrid(lgr.elasticNetParam, elasticNetParam)\
+        .addGrid(lgr.regParam, regParam)\
+        .build()
 
+    evaluator = MulticlassClassificationEvaluator(metricName='f1')
+
+    cross_validator = CrossValidator(estimator=lgr,
+                                     estimatorParamMaps=paramGrid,
+                                     evaluator=evaluator,
+                                     numFolds=folds)
+    return cross_validator
+
+
+def get_model_LGR(maxIter, crossValidation=False, folds=3):
+    if crossValidation:
+        cross_validator = create_cross_validator_LGR(folds=folds)
+        return cross_validator
+    else:
+        return LogisticRegression(maxIter=maxIter)
+
+    # predictions = lr.transform(test)
+    # evaluator = BinaryClassificationEvaluator(labelCol='churned_num')
+    #
+    # print('Logistic regresstion, test set, Area Under ROC', evaluator.evaluate(predictions))
+
+def create_cross_validator_SVC(folds=3):
+    svc = LinearSVC()
+
+    # We use a ParamGridBuilder to construct a grid of parameters to search over
+    iterations = [10, 20, 30]
+    regParam = [0.1, 0.2, 0.3]
+
+    paramGrid = ParamGridBuilder()\
+        .addGrid(svc.maxIter, iterations)\
+        .addGrid(svc.regParam, regParam)\
+        .build()
+
+    evaluator = MulticlassClassificationEvaluator(metricName='f1')
+
+    cross_validator = CrossValidator(estimator=svc,
+                                     estimatorParamMaps=paramGrid,
+                                     evaluator=evaluator,
+                                     numFolds=folds)
+    return cross_validator
+
+
+def get_model_SVC(maxIter, crossValidation=False, folds=3):
+    if crossValidation:
+        cross_validator = create_cross_validator_SVC(folds)
+        return cross_validator
+
+    else:
+        return LinearSVC(maxIter=maxIter)
 
 def main(
         outFile,
@@ -235,11 +289,12 @@ def main(
     trainingDF = trainTest[0]
     testDF = trainTest[1]
 
+    ### RUNNING GRADIENT BOOSTED TREES ###
     if crossValidation:
         print("Running Gradient Boosted Trees cross validation with {} folds ...".format(folds))
     else:
         print("Running Gradient Boosted Trees without cross validation ...")
-    model = get_model(maxIter, crossValidation, folds)
+    model = get_model_GBT(maxIter, crossValidation, folds)
     cvModel_GradBoostTree = model.fit(trainingDF)
     # cvModel_GradBoostTree.avgMetrics
     results_GradBoostTree = cvModel_GradBoostTree.transform(testDF)
@@ -261,6 +316,61 @@ def main(
     print('F1 Score:{}'.format(f1Score))
     print('F1 Score:{}'.format(f1Score), file=outFile)
 
+    ### RUNNING LOGISTIC REGRESSION MODEL ###
+    if crossValidation:
+        print("Running Logistic Regression cross validation with {} folds ...".format(folds))
+    else:
+        print("Running Logistic Regression without cross validation ...")
+
+    model = get_model_LGR(maxIter, crossValidation, folds)
+    cvModel_lgr = model.fit(trainingDF)
+
+    results_lgr = cvModel_lgr.transform(testDF)
+    results_lgr = results_lgr.select('userID', 'label', 'prediction')
+    results_lgr.show(10)
+
+    if crossValidation:
+        print("Best model selected from cross validation:\n", cvModel_lgr.bestModel)
+        print("Best model selected from cross validation:\n", cvModel_lgr.bestModel, file=outFile)
+
+    evaluator = MulticlassClassificationEvaluator(predictionCol="prediction")
+    accuracy = evaluator.evaluate(results_lgr, {evaluator.metricName: "accuracy"})
+    f1Score = evaluator.evaluate(results_lgr, {evaluator.metricName: "f1"})
+    print('Logistic Regression Metrics:')
+    print('Logistic Regression Metrics:', file=outFile)
+    print('Accuracy: {}'.format(accuracy))
+    print('Accuracy: {}'.format(accuracy), file=outFile)
+    print('F1 Score:{}'.format(f1Score))
+    print('F1 Score:{}'.format(f1Score), file=outFile)
+
+    ### Running SVM Model ###
+    if crossValidation:
+        print("Running SVM cross validation with {} folds ...".format(folds))
+    else:
+        print("Running SVM without cross validation ...")
+
+    model = get_model_SVC(maxIter, crossValidation, folds)
+    cvModel_svc = model.fit(trainingDF)
+
+    results_svc = cvModel_svc.transform(testDF)
+    results_svc = results_svc.select('userID', 'label', 'prediction')
+    results_svc.show(10)
+
+    if crossValidation:
+        print("Best model selected form cross validation:\n", cvModel_svc.bestModel)
+        print("Best model selected form cross validation:\n", cvModel_svc.bestModel, file=outFile)
+
+    evaluator = MulticlassClassificationEvaluator(predictionCol="prediction")
+    accuracy = evaluator.evaluate(results_svc, {evaluator.metricName: "accuracy"})
+    f1Score = evaluator.evaluate(results_svc, {evaluator.metricName: "f1"})
+    print('SVM Metrics:')
+    print('SVM Metrics:', file=outFile)
+    print('Accuracy: {}'.format(accuracy))
+    print('Accuracy: {}'.format(accuracy), file=outFile)
+    print('F1 Score:{}'.format(f1Score))
+    print('F1 Score:{}'.format(f1Score), file=outFile)
+
+
     time_end = time.time()
     print("Total time to run Script: {} minutes".format((time_end - time_start) / 60))
     print("Total time to run Script: {} seconds".format(time_end - time_start), file=outFile)
@@ -268,8 +378,18 @@ def main(
 
     print(results_GradBoostTree.count())
     if results_GradBoostTree.count() > 1000:
-        file_name = '../out/predictions-' + timeStamp + '.csv'
-        results_GradBoostTree.write.option("header", "true").csv(file_name)
+        file_name_gbt = '../out/GradientBoostpredictions-' + timeStamp + '.csv'
+        results_GradBoostTree.write.option("header", "true").csv(file_name_gbt)
+
+    print(results_lgr.count())
+    if results_lgr.count() > 1000:
+        file_name_lgr = '../out/LGRpredictions-' + timeStamp + '.csv'
+        results_lgr.write.option("header", "true").csv(file_name_lgr)
+
+    print(results_svc.count())
+    if results_svc.count() > 1000:
+        file_name_svc = '../out/SVMpredictions-' + timeStamp + '.csv'
+        results_svc.write.option("header", "true").csv(file_name_svc)
     spark.stop()
 
 
