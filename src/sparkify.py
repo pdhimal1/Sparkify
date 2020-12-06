@@ -13,7 +13,7 @@ https://udacity-dsnd.s3.amazonaws.com/sparkify/mini_sparkify_event_data.json
 import time
 
 from pyspark.ml.classification import GBTClassifier, LogisticRegression, LinearSVC
-from pyspark.ml.evaluation import MulticlassClassificationEvaluator, BinaryClassificationEvaluator
+from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 from pyspark.ml.feature import StandardScaler, VectorAssembler
 from pyspark.ml.tuning import CrossValidator, ParamGridBuilder
 from pyspark.sql import SparkSession
@@ -108,17 +108,10 @@ def add_features(data):
         .withColumnRenamed('count', 'add_friend')
 
     # Playlist length
-    playlist_length = data.select('userID', 'page')\
-        .where(data.page == 'Add to Playlist')\
-        .groupby('userID').count()\
+    playlist_length = data.select('userID', 'page') \
+        .where(data.page == 'Add to Playlist') \
+        .groupby('userID').count() \
         .withColumnRenamed('count', 'playlist_length')
-
-    # listen time
-    listen_time = data \
-        .select('userID', 'length') \
-        .groupBy('userID') \
-        .sum() \
-        .withColumnRenamed('sum(length)', 'listen_time')
 
     #  avg_songs_played per session
     avg_songs_played = data.where('page == "NextSong"') \
@@ -128,15 +121,8 @@ def add_features(data):
         .agg({'count': 'avg'}) \
         .withColumnRenamed('avg(count)', 'avg_songs_played')
 
-    # gender
-    gender = data \
-        .select("userId", "gender") \
-        .dropDuplicates() \
-        .replace(['M', 'F'], ['0', '1'], 'gender') \
-        .select('userId', col('gender').cast('int'))
-
     # artist count
-    artist_count =  data \
+    artist_count = data \
         .filter(data.page == "NextSong") \
         .select("userId", "artist") \
         .dropDuplicates() \
@@ -144,20 +130,13 @@ def add_features(data):
         .count() \
         .withColumnRenamed("count", "artist_count")
 
-    # paid vs free
-    level = data \
-        .select("userId", "level") \
-        .dropDuplicates() \
-        .replace(['free', 'paid'], ['0', '1'], 'level') \
-        .select('userId', col('level').cast('int'))
-
     # number of sessions
-    num_sessions = data\
+    num_sessions = data \
         .select("userId", "sessionId") \
         .dropDuplicates() \
         .groupby("userId") \
         .count() \
-        .withColumnRenamed('count', 'num_sessions') \
+        .withColumnRenamed('count', 'num_sessions')
 
     cols = ["lifetime",
             "total_songs",
@@ -165,11 +144,8 @@ def add_features(data):
             'num_thumb_down',
             'add_friend',
             'playlist_length',
-            'listen_time',
             'avg_songs_played',
-            'gender',
             'artist_count',
-            'level',
             'num_sessions'
             ]
 
@@ -179,11 +155,8 @@ def add_features(data):
                   thumbs_down,
                   referring_friends,
                   playlist_length,
-                  listen_time,
                   avg_songs_played,
-                  gender,
                   artist_count,
-                  level,
                   num_sessions]
 
 
@@ -227,10 +200,10 @@ def create_cross_validator_LGR(folds=3):
     regParam = [0.1, 0.2]
     elasticNetParam = [0.8, 0.9]
 
-    paramGrid = ParamGridBuilder()\
-        .addGrid(lgr.maxIter, iterations)\
-        .addGrid(lgr.elasticNetParam, elasticNetParam)\
-        .addGrid(lgr.regParam, regParam)\
+    paramGrid = ParamGridBuilder() \
+        .addGrid(lgr.maxIter, iterations) \
+        .addGrid(lgr.elasticNetParam, elasticNetParam) \
+        .addGrid(lgr.regParam, regParam) \
         .build()
 
     evaluator = MulticlassClassificationEvaluator(metricName='f1')
@@ -254,6 +227,7 @@ def get_model_LGR(maxIter, crossValidation=False, folds=3):
     #
     # print('Logistic regresstion, test set, Area Under ROC', evaluator.evaluate(predictions))
 
+
 def create_cross_validator_SVC(folds=3):
     svc = LinearSVC()
 
@@ -261,9 +235,9 @@ def create_cross_validator_SVC(folds=3):
     iterations = [10, 20, 30]
     regParam = [0.1, 0.2, 0.3]
 
-    paramGrid = ParamGridBuilder()\
-        .addGrid(svc.maxIter, iterations)\
-        .addGrid(svc.regParam, regParam)\
+    paramGrid = ParamGridBuilder() \
+        .addGrid(svc.maxIter, iterations) \
+        .addGrid(svc.regParam, regParam) \
         .build()
 
     evaluator = MulticlassClassificationEvaluator(metricName='f1')
@@ -283,6 +257,7 @@ def get_model_SVC(maxIter, crossValidation=False, folds=3):
     else:
         return LinearSVC(maxIter=maxIter)
 
+
 def main(
         outFile,
         timeStamp,
@@ -295,14 +270,14 @@ def main(
     spark = init_spark()
     data = read_data(spark)
 
-    # userId, registration, ts, song, page
+    # userId, registration, ts, song, page, sessionId
     data = data.drop(*['firstName', 'lastName', 'id_copy'])
     data = data.dropna(how='any', subset=['userId'])
     data = data.filter(data["userId"] != "")
     data = data.filter(data['userId'].isNotNull())
 
     # milliseconds to microseconds
-    time_unit_udf = F.udf(lambda x: x/1000, DoubleType())
+    time_unit_udf = F.udf(lambda x: x / 1000, DoubleType())
     data = data.withColumn("registration", time_unit_udf("registration"))
     data = data.withColumn("ts", time_unit_udf("ts"))
     '''
@@ -319,10 +294,9 @@ def main(
     print("The total number of users:", unique_userIDs)
     print("The total number of users:", unique_userIDs, file=outFile)
 
-    # todo - look at this
-    total_churners = data.agg(Fsum("churn")).collect()[0][0]
-    print("The total number of churners are:", total_churners)
-    print("The total number of churners are:", total_churners, file=outFile)
+    total_churners = data.filter(data['churn'] == 1).count()
+    print("The total number of churning instances: ", total_churners)
+    print("The total number of churners instances: ", total_churners, file=outFile)
 
     '''
     Each users are assigned a label
@@ -343,9 +317,9 @@ def main(
     data = assembler.transform(data)
 
     # let go of all the feature columns
-    data.show(vertical=True, n=2)
+    # data.show(vertical=True, n=2)
     data = data.select('userID', 'unScaled_features', 'label')
-    data.show(vertical=True, n=2)
+    # data.show(vertical=True, n=2)
 
     # scale the features
     scaler = StandardScaler(inputCol="unScaled_features", outputCol="features", withStd=True)
@@ -387,6 +361,12 @@ def main(
     print('Accuracy: {:.2f}'.format(accuracy), file=outFile)
     print('F1 Score: {:.2f}'.format(f1Score))
     print('F1 Score: {:.2f}'.format(f1Score), file=outFile)
+
+    print("Feature importance: ")
+    print("Feature importance: ", file=outFile)
+    for feat, col in zip(cvModel_GradBoostTree.featureImportances, column_names):
+        print("\t", col, ": ", feat)
+        print("\t", col, ": ", feat, file=outFile)
 
     ### RUNNING LOGISTIC REGRESSION MODEL ###
     if crossValidation:
@@ -431,6 +411,7 @@ def main(
     if crossValidation:
         print("Best model selected form cross validation:\n", cvModel_svc.bestModel)
         print("Best model selected form cross validation:\n", cvModel_svc.bestModel, file=outFile)
+        print("Feature importance: ")
 
     evaluator = MulticlassClassificationEvaluator(predictionCol="prediction")
     accuracy = evaluator.evaluate(results_svc, {evaluator.metricName: "accuracy"})
@@ -442,26 +423,22 @@ def main(
     print('F1 Score: {:.2f}'.format(f1Score))
     print('F1 Score: {:.2f}'.format(f1Score), file=outFile)
 
-
     time_end = time.time()
     print("Total time to run Script: {} minutes".format((time_end - time_start) / 60))
     print("Total time to run Script: {} seconds".format(time_end - time_start), file=outFile)
     print("Total time to run Script: {} minutes".format((time_end - time_start) / 60), file=outFile)
 
-    print(results_GradBoostTree.count())
-    if results_GradBoostTree.count() > 1000:
-        file_name_gbt = '../out/GradientBoostpredictions-' + timeStamp + '.csv'
-        results_GradBoostTree.write.option("header", "true").csv(file_name_gbt)
+    results_GradBoostTree = results_GradBoostTree.withColumnRenamed("prediction", "prediction_GBT")
+    results_lgr = results_lgr.select('userId', 'prediction').withColumnRenamed("prediction", "prediction_LGR")
+    results_svc = results_svc.select('userId', 'prediction').withColumnRenamed("prediction", "prediction_SVC")
+    results = results_GradBoostTree.join(results_lgr, 'userID', 'outer')
+    results = results.join(results_svc, 'userID', 'outer')
+    results.show()
 
-    print(results_lgr.count())
-    if results_lgr.count() > 1000:
-        file_name_lgr = '../out/LGRpredictions-' + timeStamp + '.csv'
-        results_lgr.write.option("header", "true").csv(file_name_lgr)
-
-    print(results_svc.count())
-    if results_svc.count() > 1000:
-        file_name_svc = '../out/SVMpredictions-' + timeStamp + '.csv'
-        results_svc.write.option("header", "true").csv(file_name_svc)
+    print(results.count())
+    if results.count() > 1000:
+        file_name = '../out/predictions-' + timeStamp + '.csv'
+        results.write.option("header", "true").csv(file_name)
     spark.stop()
 
 
@@ -470,12 +447,20 @@ if __name__ == "__main__":
     crossValidation = False
     folds = 3
 
-    # gradient boost trees
-    # Best model selected from cross validation:
-    # GBTClassificationModel: uid = GBTClassifier_ecaf70bbfc1e, numTrees=20, numClasses=2, numFeatures=5
+    '''
+    Best model selected from cross validation:
+    GBTClassificationModel: uid = GBTClassifier_ecaf70bbfc1e, numTrees=20, numClasses=2, numFeatures=5
+    
+    Best model selected from cross validation:
+    LogisticRegressionModel: uid=LogisticRegression_8d843b9072b8, numClasses=2, numFeatures=5
+    
+    Best model selected form cross validation:
+    LinearSVCModel: uid=LinearSVC_b8cfaa1e744d, numClasses=2, numFeatures=5
+    '''
+    # For all models
     maxIter = 5
 
-    # to use the full dataset
+    # to use the full dataset, set this to DATA_FILE_FULL, and make sure DATA_FILE_FULL exists
     DATA_FILE = DATA_FILE_MINI
 
     time_stamp = str(int(time.time()))
