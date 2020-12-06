@@ -12,7 +12,7 @@ https://udacity-dsnd.s3.amazonaws.com/sparkify/mini_sparkify_event_data.json
 '''
 import time
 
-from pyspark.ml.classification import GBTClassifier, LogisticRegression, LinearSVC
+from pyspark.ml.classification import GBTClassifier, LogisticRegression, LinearSVC, RandomForestClassifier
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 from pyspark.ml.feature import StandardScaler, VectorAssembler
 from pyspark.ml.tuning import CrossValidator, ParamGridBuilder
@@ -257,8 +257,31 @@ def get_model_SVC(crossValidation=False, folds=3):
         return LinearSVC()
 
 
-def hybrid_function(prediction_GBT, prediction_LGR, prediction_SVM):
-    sum_predictions = prediction_GBT + prediction_LGR + prediction_SVM
+def create_cross_validator_RandomForest(folds=3):
+    rf_classifier = RandomForestClassifier()
+    # We use a ParamGridBuilder to construct a grid of parameters to search over
+    maxDepth = [4, 5, 6]  # default is 5
+    paramGrid = ParamGridBuilder() \
+        .addGrid(rf_classifier.maxDepth, maxDepth) \
+        .build()
+    evaluator = MulticlassClassificationEvaluator(metricName='f1')
+    cross_validator = CrossValidator(estimator=rf_classifier,
+                                     estimatorParamMaps=paramGrid,
+                                     evaluator=evaluator,
+                                     numFolds=folds)
+    return cross_validator
+
+
+def get_model_RandomForest(crossValidation=False, folds=3):
+    if crossValidation:
+        cross_validator = create_cross_validator_RandomForest(folds)
+        return cross_validator
+    else:
+        return RandomForestClassifier()
+
+
+def hybrid_function(prediction_GBT, prediction_LGR, prediction_SVM, prediction_rf):
+    sum_predictions = prediction_GBT + prediction_LGR + prediction_SVM + prediction_rf
     if sum_predictions >= 1:
         return 1.0
     else:
@@ -416,7 +439,6 @@ def main(
     if crossValidation:
         print("Best model selected form cross validation:\n", cvModel_svc.bestModel)
         print("Best model selected form cross validation:\n", cvModel_svc.bestModel, file=outFile)
-        print("Feature importance: ")
 
     evaluator = MulticlassClassificationEvaluator(predictionCol="prediction")
     accuracy = evaluator.evaluate(results_svc, {evaluator.metricName: "accuracy"})
@@ -428,19 +450,44 @@ def main(
     print('F1 Score: {:.2f}'.format(f1Score))
     print('F1 Score: {:.2f}'.format(f1Score), file=outFile)
 
+    model = get_model_RandomForest()
+    cvModel_rf = model.fit(trainingDF)
+
+    # Make Predictions
+    results_rf = cvModel_rf.transform(testDF).select('userID', 'label', 'prediction')
+    results_rf.show(10)
+
+    if crossValidation:
+        print("Best model selected form cross validation:\n", results_rf.bestModel)
+        print("Best model selected form cross validation:\n", results_rf.bestModel, file=outFile)
+
+    # Get Results
+    evaluator = MulticlassClassificationEvaluator(predictionCol="prediction")
+    accuracy = evaluator.evaluate(results_rf, {evaluator.metricName: "accuracy"})
+    f1Score = evaluator.evaluate(results_rf, {evaluator.metricName: "f1"})
+    print('Random Forest Metrics:')
+    print('Random Forest Metrics:', file=outFile)
+    print('Accuracy: {:.2f}'.format(accuracy))
+    print('Accuracy: {:.2f}'.format(accuracy), file=outFile)
+    print('F1 Score: {:.2f}'.format(f1Score))
+    print('Accuracy: {:.2f}'.format(accuracy), file=outFile)
+
     results_GradBoostTree = results_GradBoostTree.withColumnRenamed("prediction", "prediction_GBT")
     results_lgr = results_lgr.select('userId', 'prediction').withColumnRenamed("prediction", "prediction_LGR")
     results_svc = results_svc.select('userId', 'prediction').withColumnRenamed("prediction", "prediction_SVC")
-    results = results_GradBoostTree.join(results_lgr, 'userID', 'outer')
-    results = results.join(results_svc, 'userID', 'outer')
-    results.show()
+    results_rf = results_rf.select('userId', 'prediction').withColumnRenamed("prediction", "prediction_RF")
+    results = results_GradBoostTree \
+        .join(results_lgr, 'userID', 'outer') \
+        .join(results_svc, 'userID', 'outer') \
+        .join(results_rf, 'userID', 'outer')
 
     udf_hybrid_calc_function = F.udf(hybrid_function, DoubleType())
     results = results.withColumn("prediction",
                                  udf_hybrid_calc_function(
                                      "prediction_GBT",
                                      "prediction_SVC",
-                                     "prediction_LGR"))
+                                     "prediction_LGR",
+                                     "prediction_RF"))
     results.show()
     evaluator = MulticlassClassificationEvaluator(predictionCol="prediction")
     accuracy = evaluator.evaluate(results, {evaluator.metricName: "accuracy"})
