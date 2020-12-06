@@ -28,7 +28,12 @@ DATA_FILE = DATA_FILE_MINI
 
 
 def init_spark():
-    spark = SparkSession.builder.master("local[*]").appName("sparkify").getOrCreate()
+    spark = SparkSession.builder \
+        .master("local[*]") \
+        .config("spark.executor.memory", "10g") \
+        .config("spark.driver.memory", "10g") \
+        .appName("hw3") \
+        .getOrCreate()
     return spark
 
 
@@ -102,17 +107,84 @@ def add_features(data):
         .count() \
         .withColumnRenamed('count', 'add_friend')
 
+    # Playlist length
+    playlist_length = data.select('userID', 'page')\
+        .where(data.page == 'Add to Playlist')\
+        .groupby('userID').count()\
+        .withColumnRenamed('count', 'playlist_length')
+
+    # listen time
+    listen_time = data \
+        .select('userID', 'length') \
+        .groupBy('userID') \
+        .sum() \
+        .withColumnRenamed('sum(length)', 'listen_time')
+
+    #  avg_songs_played per session
+    avg_songs_played = data.where('page == "NextSong"') \
+        .groupby(['userId', 'sessionId']) \
+        .count() \
+        .groupby(['userId']) \
+        .agg({'count': 'avg'}) \
+        .withColumnRenamed('avg(count)', 'avg_songs_played')
+
+    # gender
+    gender = data \
+        .select("userId", "gender") \
+        .dropDuplicates() \
+        .replace(['M', 'F'], ['0', '1'], 'gender') \
+        .select('userId', col('gender').cast('int'))
+
+    # artist count
+    artist_count =  data \
+        .filter(data.page == "NextSong") \
+        .select("userId", "artist") \
+        .dropDuplicates() \
+        .groupby("userId") \
+        .count() \
+        .withColumnRenamed("count", "artist_count")
+
+    # paid vs free
+    level = data \
+        .select("userId", "level") \
+        .dropDuplicates() \
+        .replace(['free', 'paid'], ['0', '1'], 'level') \
+        .select('userId', col('level').cast('int'))
+
+    # number of sessions
+    num_sessions = data\
+        .select("userId", "sessionId") \
+        .dropDuplicates() \
+        .groupby("userId") \
+        .count() \
+        .withColumnRenamed('count', 'num_sessions') \
+
     cols = ["lifetime",
             "total_songs",
             "num_thumb_up",
             'num_thumb_down',
-            'add_friend']
+            'add_friend',
+            'playlist_length',
+            'listen_time',
+            'avg_songs_played',
+            'gender',
+            'artist_count',
+            'level',
+            'num_sessions'
+            ]
 
     return cols, [time_since_registration,
                   total_songs_listened,
                   thumbs_up,
                   thumbs_down,
-                  referring_friends]
+                  referring_friends,
+                  playlist_length,
+                  listen_time,
+                  avg_songs_played,
+                  gender,
+                  artist_count,
+                  level,
+                  num_sessions]
 
 
 def create_cross_validator_GBT(folds=3):
@@ -152,8 +224,8 @@ def create_cross_validator_LGR(folds=3):
 
     # We use a ParamGridBuilder to construct a grid of parameters to search over
     iterations = [10, 20, 30]
-    regParam = [0.1, 0.2, 0.3]
-    elasticNetParam = [0.7, 0.8, 0.9]
+    regParam = [0.1, 0.2]
+    elasticNetParam = [0.8, 0.9]
 
     paramGrid = ParamGridBuilder()\
         .addGrid(lgr.maxIter, iterations)\
@@ -224,7 +296,7 @@ def main(
     data = read_data(spark)
 
     # userId, registration, ts, song, page
-    data = data.drop(*['artist', 'firstName', 'lastName', 'id_copy'])
+    data = data.drop(*['firstName', 'lastName', 'id_copy'])
     data = data.dropna(how='any', subset=['userId'])
     data = data.filter(data["userId"] != "")
     data = data.filter(data['userId'].isNotNull())
@@ -311,10 +383,10 @@ def main(
     f1Score = evaluator.evaluate(results_GradBoostTree, {evaluator.metricName: "f1"})
     print('Gradient Boosted Trees Metrics:')
     print('Gradient Boosted Trees Metrics:', file=outFile)
-    print('Accuracy: {}'.format(accuracy))
-    print('Accuracy: {}'.format(accuracy), file=outFile)
-    print('F1 Score:{}'.format(f1Score))
-    print('F1 Score:{}'.format(f1Score), file=outFile)
+    print('Accuracy: {:.2f}'.format(accuracy))
+    print('Accuracy: {:.2f}'.format(accuracy), file=outFile)
+    print('F1 Score: {:.2f}'.format(f1Score))
+    print('F1 Score: {:.2f}'.format(f1Score), file=outFile)
 
     ### RUNNING LOGISTIC REGRESSION MODEL ###
     if crossValidation:
@@ -338,10 +410,10 @@ def main(
     f1Score = evaluator.evaluate(results_lgr, {evaluator.metricName: "f1"})
     print('Logistic Regression Metrics:')
     print('Logistic Regression Metrics:', file=outFile)
-    print('Accuracy: {}'.format(accuracy))
-    print('Accuracy: {}'.format(accuracy), file=outFile)
-    print('F1 Score:{}'.format(f1Score))
-    print('F1 Score:{}'.format(f1Score), file=outFile)
+    print('Accuracy: {:.2f}'.format(accuracy))
+    print('Accuracy: {:.2f}'.format(accuracy), file=outFile)
+    print('F1 Score: {:.2f}'.format(f1Score))
+    print('F1 Score: {:.2f}'.format(f1Score), file=outFile)
 
     ### Running SVM Model ###
     if crossValidation:
@@ -365,10 +437,10 @@ def main(
     f1Score = evaluator.evaluate(results_svc, {evaluator.metricName: "f1"})
     print('SVM Metrics:')
     print('SVM Metrics:', file=outFile)
-    print('Accuracy: {}'.format(accuracy))
-    print('Accuracy: {}'.format(accuracy), file=outFile)
-    print('F1 Score:{}'.format(f1Score))
-    print('F1 Score:{}'.format(f1Score), file=outFile)
+    print('Accuracy: {:.2f}'.format(accuracy))
+    print('Accuracy: {:.2f}'.format(accuracy), file=outFile)
+    print('F1 Score: {:.2f}'.format(f1Score))
+    print('F1 Score: {:.2f}'.format(f1Score), file=outFile)
 
 
     time_end = time.time()
