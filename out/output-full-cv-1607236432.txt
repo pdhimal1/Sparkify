@@ -1,0 +1,57 @@
+Using data from  ../../../data/sparkify_event_data.json
+                         page
+0                      Cancel
+1            Submit Downgrade
+2                 Thumbs Down
+3                        Home
+4                   Downgrade
+5                 Roll Advert
+6                      Logout
+7               Save Settings
+8   Cancellation Confirmation
+9                       About
+10                   Settings
+11            Add to Playlist
+12                 Add Friend
+13                   NextSong
+14                  Thumbs Up
+15                       Help
+16                    Upgrade
+17                      Error
+18             Submit Upgrade
+               artist       auth  ...   userId  churn
+0            Coldplay  Logged In  ...  1000280      1
+1  Charttraxx Karaoke  Logged In  ...  1000280      1
+2        Dixie Chicks  Logged In  ...  1000280      1
+3             Erasure  Logged In  ...  1000280      1
+4      Britney Spears  Logged In  ...  1000280      1
+5             Phoenix  Logged In  ...  1000280      1
+6                None  Logged In  ...  1000280      1
+7            Al Green  Logged In  ...  1000280      1
+8   Brotha Lynch Hung  Logged In  ...  1000280      1
+9    Five Iron Frenzy  Logged In  ...  1000280      1
+
+[10 rows x 17 columns]
+The total number of users: 22277
+The total number of churners instances:  5382467
+Number of users in the data:  22277
+Best model selected from cross validation:
+ GBTClassificationModel: uid = GBTClassifier_02001554d285, numTrees=20, numClasses=2, numFeatures=9
+Gradient Boosted Trees Metrics:
+Accuracy: 0.83
+F1 Score: 0.81
+Best model selected from cross validation:
+ LogisticRegressionModel: uid=LogisticRegression_ffafedd49a27, numClasses=2, numFeatures=9
+Logistic Regression Metrics:
+Accuracy: 0.77
+F1 Score: 0.67
+Best model selected form cross validation:
+ LinearSVCModel: uid=LinearSVC_647fcbdc9c4f, numClasses=2, numFeatures=9
+SVM Metrics:
+Accuracy: 0.77
+F1 Score: 0.67
+Hybrid Metrics:
+Accuracy: 0.83
+F1 Score: 0.81
+Total time to run Script: 9071.314058065414 seconds
+Total time to run Script: 151.18856763442358 minutes
