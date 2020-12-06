@@ -166,7 +166,7 @@ def create_cross_validator_GBT(folds=3):
 
     # We use a ParamGridBuilder to construct a grid of parameters to search over.
     depth = [3, 5, 7]  # number of features
-    iterations = [10, 20, 30]
+    iterations = [10, 20, 30]  # default is 20
     bins = [16, 32, 64]
     #
     # maxDepth=5, maxBins=32, maxIter=20
@@ -184,19 +184,19 @@ def create_cross_validator_GBT(folds=3):
     return cross_validator
 
 
-def get_model_GBT(maxIter, crossValidation=False, folds=3):
+def get_model_GBT(crossValidation=False, folds=3):
     if crossValidation:
         cross_validator = create_cross_validator_GBT(folds=folds)
         return cross_validator
     else:
-        return GBTClassifier(maxIter=maxIter, seed=42)
+        return GBTClassifier()
 
 
 def create_cross_validator_LGR(folds=3):
     lgr = LogisticRegression()
 
     # We use a ParamGridBuilder to construct a grid of parameters to search over
-    iterations = [10, 20, 30]
+    iterations = [90, 100, 110]  # default is 100
     regParam = [0.1, 0.2]
     elasticNetParam = [0.8, 0.9]
 
@@ -215,12 +215,12 @@ def create_cross_validator_LGR(folds=3):
     return cross_validator
 
 
-def get_model_LGR(maxIter, crossValidation=False, folds=3):
+def get_model_LGR(crossValidation=False, folds=3):
     if crossValidation:
         cross_validator = create_cross_validator_LGR(folds=folds)
         return cross_validator
     else:
-        return LogisticRegression(maxIter=maxIter)
+        return LogisticRegression()
 
     # predictions = lr.transform(test)
     # evaluator = BinaryClassificationEvaluator(labelCol='churned_num')
@@ -232,7 +232,7 @@ def create_cross_validator_SVC(folds=3):
     svc = LinearSVC()
 
     # We use a ParamGridBuilder to construct a grid of parameters to search over
-    iterations = [10, 20, 30]
+    iterations = [90, 100, 110]  # default is 100
     regParam = [0.1, 0.2, 0.3]
 
     paramGrid = ParamGridBuilder() \
@@ -249,20 +249,26 @@ def create_cross_validator_SVC(folds=3):
     return cross_validator
 
 
-def get_model_SVC(maxIter, crossValidation=False, folds=3):
+def get_model_SVC(crossValidation=False, folds=3):
     if crossValidation:
         cross_validator = create_cross_validator_SVC(folds)
         return cross_validator
-
     else:
-        return LinearSVC(maxIter=maxIter)
+        return LinearSVC()
+
+
+def hybrid_function(prediction_GBT, prediction_LGR, prediction_SVM):
+    sum_predictions = prediction_GBT + prediction_LGR + prediction_SVM
+    if sum_predictions >= 1:
+        return 1.0
+    else:
+        return 0.0
 
 
 def main(
         outFile,
         timeStamp,
         crossValidation=False,
-        maxIter=5,
         folds=3):
     time_start = time.time()
     print("Using data from ", DATA_FILE)
@@ -272,9 +278,7 @@ def main(
 
     # userId, registration, ts, song, page, sessionId
     data = data.drop(*['firstName', 'lastName', 'id_copy'])
-    data = data.dropna(how='any', subset=['userId'])
-    data = data.filter(data["userId"] != "")
-    data = data.filter(data['userId'].isNotNull())
+    data = data.filter(data["userId"] != "").filter(data['registration'].isNotNull())
 
     # milliseconds to microseconds
     time_unit_udf = F.udf(lambda x: x / 1000, DoubleType())
@@ -340,11 +344,10 @@ def main(
         print("Running Gradient Boosted Trees cross validation with {} folds ...".format(folds))
     else:
         print("Running Gradient Boosted Trees without cross validation ...")
-    model = get_model_GBT(maxIter, crossValidation, folds)
+    model = get_model_GBT(crossValidation, folds)
     cvModel_GradBoostTree = model.fit(trainingDF)
     # cvModel_GradBoostTree.avgMetrics
     results_GradBoostTree = cvModel_GradBoostTree.transform(testDF)
-    # todo -    rawPrediction|         probability  ?
     results_GradBoostTree = results_GradBoostTree.select('userID', 'label', 'prediction')
     results_GradBoostTree.show(10)
 
@@ -362,11 +365,13 @@ def main(
     print('F1 Score: {:.2f}'.format(f1Score))
     print('F1 Score: {:.2f}'.format(f1Score), file=outFile)
 
+    '''
     print("Feature importance: ")
     print("Feature importance: ", file=outFile)
     for feat, col in zip(cvModel_GradBoostTree.featureImportances, column_names):
         print("\t", col, ": ", feat)
         print("\t", col, ": ", feat, file=outFile)
+    '''
 
     ### RUNNING LOGISTIC REGRESSION MODEL ###
     if crossValidation:
@@ -374,7 +379,7 @@ def main(
     else:
         print("Running Logistic Regression without cross validation ...")
 
-    model = get_model_LGR(maxIter, crossValidation, folds)
+    model = get_model_LGR(crossValidation, folds)
     cvModel_lgr = model.fit(trainingDF)
 
     results_lgr = cvModel_lgr.transform(testDF)
@@ -401,7 +406,7 @@ def main(
     else:
         print("Running SVM without cross validation ...")
 
-    model = get_model_SVC(maxIter, crossValidation, folds)
+    model = get_model_SVC(crossValidation, folds)
     cvModel_svc = model.fit(trainingDF)
 
     results_svc = cvModel_svc.transform(testDF)
@@ -423,11 +428,6 @@ def main(
     print('F1 Score: {:.2f}'.format(f1Score))
     print('F1 Score: {:.2f}'.format(f1Score), file=outFile)
 
-    time_end = time.time()
-    print("Total time to run Script: {} minutes".format((time_end - time_start) / 60))
-    print("Total time to run Script: {} seconds".format(time_end - time_start), file=outFile)
-    print("Total time to run Script: {} minutes".format((time_end - time_start) / 60), file=outFile)
-
     results_GradBoostTree = results_GradBoostTree.withColumnRenamed("prediction", "prediction_GBT")
     results_lgr = results_lgr.select('userId', 'prediction').withColumnRenamed("prediction", "prediction_LGR")
     results_svc = results_svc.select('userId', 'prediction').withColumnRenamed("prediction", "prediction_SVC")
@@ -435,10 +435,33 @@ def main(
     results = results.join(results_svc, 'userID', 'outer')
     results.show()
 
+    udf_hybrid_calc_function = F.udf(hybrid_function, DoubleType())
+    results = results.withColumn("prediction",
+                                 udf_hybrid_calc_function(
+                                     "prediction_GBT",
+                                     "prediction_SVC",
+                                     "prediction_LGR"))
+    results.show()
+    evaluator = MulticlassClassificationEvaluator(predictionCol="prediction")
+    accuracy = evaluator.evaluate(results, {evaluator.metricName: "accuracy"})
+    f1Score = evaluator.evaluate(results, {evaluator.metricName: "f1"})
+    print('Hybrid Metrics:')
+    print('Hybrid Metrics:', file=outFile)
+    print('Accuracy: {:.2f}'.format(accuracy))
+    print('Accuracy: {:.2f}'.format(accuracy), file=outFile)
+    print('F1 Score: {:.2f}'.format(f1Score))
+    print('F1 Score: {:.2f}'.format(f1Score), file=outFile)
+
     print(results.count())
     if results.count() > 1000:
         file_name = '../out/predictions-' + timeStamp + '.csv'
         results.write.option("header", "true").csv(file_name)
+
+    time_end = time.time()
+    print("Total time to run Script: {} minutes".format((time_end - time_start) / 60))
+    print("Total time to run Script: {} seconds".format(time_end - time_start), file=outFile)
+    print("Total time to run Script: {} minutes".format((time_end - time_start) / 60), file=outFile)
+
     spark.stop()
 
 
@@ -457,9 +480,6 @@ if __name__ == "__main__":
     Best model selected form cross validation:
     LinearSVCModel: uid=LinearSVC_b8cfaa1e744d, numClasses=2, numFeatures=5
     '''
-    # For all models
-    maxIter = 5
-
     # to use the full dataset, set this to DATA_FILE_FULL, and make sure DATA_FILE_FULL exists
     DATA_FILE = DATA_FILE_MINI
 
@@ -470,6 +490,5 @@ if __name__ == "__main__":
         out_file,
         time_stamp,
         crossValidation=crossValidation,
-        folds=folds,
-        maxIter=maxIter)
+        folds=folds)
     print("Check ", out_file.name)
