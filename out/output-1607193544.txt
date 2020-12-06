@@ -1,1 +1,0 @@
-Using data from  ../data/mini_sparkify_event_data.json
