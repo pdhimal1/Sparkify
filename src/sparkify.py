@@ -23,7 +23,7 @@ from pyspark.sql.types import IntegerType, DoubleType
 from pyspark.sql.window import Window
 
 DATA_FILE_MINI = "../data/mini_sparkify_event_data.json"
-DATA_FILE_FULL = "../../../data/sparkify_event_data.json"
+DATA_FILE_FULL = "../data/sparkify_event_data.json"
 DATA_FILE = DATA_FILE_MINI
 
 
@@ -450,7 +450,12 @@ def main(
     print('F1 Score: {:.2f}'.format(f1Score))
     print('F1 Score: {:.2f}'.format(f1Score), file=outFile)
 
-    model = get_model_RandomForest()
+    ### RUNNING RANDOM FOREST MODEL ###
+    if crossValidation:
+        print("Running Random Forest cross validation with {} folds ...".format(folds))
+    else:
+        print("Running Random Forest without cross validation ...")
+    model = get_model_RandomForest(crossValidation, folds)
     cvModel_rf = model.fit(trainingDF)
 
     # Make Predictions
@@ -458,8 +463,8 @@ def main(
     results_rf.show(10)
 
     if crossValidation:
-        print("Best model selected form cross validation:\n", results_rf.bestModel)
-        print("Best model selected form cross validation:\n", results_rf.bestModel, file=outFile)
+        print("Best model selected form cross validation:\n", cvModel_rf.bestModel)
+        print("Best model selected form cross validation:\n", cvModel_rf.bestModel, file=outFile)
 
     # Get Results
     evaluator = MulticlassClassificationEvaluator(predictionCol="prediction")
@@ -526,6 +531,9 @@ if __name__ == "__main__":
     
     Best model selected form cross validation:
     LinearSVCModel: uid=LinearSVC_b8cfaa1e744d, numClasses=2, numFeatures=5
+    
+    Best model selected form cross validation:
+    RandomForestClassificationModel: uid=RandomForestClassifier_5d154263f367, numTrees=20, numClasses=2, numFeatures=9
     '''
     # to use the full dataset, set this to DATA_FILE_FULL, and make sure DATA_FILE_FULL exists
     DATA_FILE = DATA_FILE_MINI
