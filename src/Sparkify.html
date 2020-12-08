@@ -14340,7 +14340,7 @@ Final Project: Sparkify</code></pre>
         <div>
             <p><b>SparkContext</b></p>
 
-            <p><a href="http://pdsager:4042">Spark UI</a></p>
+            <p><a href="http://pdsager:4041">Spark UI</a></p>
 
             <dl>
               <dt>Version</dt>
@@ -14534,7 +14534,7 @@ only showing top 2 rows
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">data</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;page&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">dropDuplicates</span><span class="p">()</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">data</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s2">&quot;page&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">dropDuplicates</span><span class="p">()</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
 </pre></div>
 
      </div>
@@ -14554,30 +14554,30 @@ only showing top 2 rows
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>+--------------------+
-|                page|
-+--------------------+
-|              Cancel|
-|    Submit Downgrade|
-|         Thumbs Down|
-|                Home|
-|           Downgrade|
-|         Roll Advert|
-|              Logout|
-|       Save Settings|
-|Cancellation Conf...|
-|               About|
-| Submit Registration|
-|            Settings|
-|               Login|
-|            Register|
-|     Add to Playlist|
-|          Add Friend|
-|            NextSong|
-|           Thumbs Up|
-|                Help|
-|             Upgrade|
-+--------------------+
+<pre>+-------------------------+
+|page                     |
++-------------------------+
+|Cancel                   |
+|Submit Downgrade         |
+|Thumbs Down              |
+|Home                     |
+|Downgrade                |
+|Roll Advert              |
+|Logout                   |
+|Save Settings            |
+|Cancellation Confirmation|
+|About                    |
+|Submit Registration      |
+|Settings                 |
+|Login                    |
+|Register                 |
+|Add to Playlist          |
+|Add Friend               |
+|NextSong                 |
+|Thumbs Up                |
+|Help                     |
+|Upgrade                  |
++-------------------------+
 only showing top 20 rows
 
 </pre>
@@ -14941,7 +14941,7 @@ only showing top 20 rows
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">cancelation_event_udf</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">udf</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="s2">&quot;Cancellation Confirmation&quot;</span> <span class="k">else</span> <span class="mi">0</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">())</span>
 <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;churn&quot;</span><span class="p">,</span> <span class="n">cancelation_event_udf</span><span class="p">(</span><span class="s2">&quot;page&quot;</span><span class="p">))</span>
-<span class="n">data</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;userId&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">125</span><span class="p">)</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s1">&#39;churn&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">data</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;userId&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1749042</span><span class="p">)</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s1">&#39;churn&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 
      </div>
@@ -14961,15 +14961,15 @@ only showing top 20 rows
 
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>+-------+-----+
-|summary|churn|
-+-------+-----+
-|  count|    0|
-|   mean| null|
-| stddev| null|
-|    min| null|
-|    max| null|
-+-------+-----+
+<pre>+-------+--------------------+
+|summary|               churn|
++-------+--------------------+
+|  count|                1223|
+|   mean|8.176614881439084E-4|
+| stddev| 0.02859478078502978|
+|    min|                   0|
+|    max|                   1|
++-------+--------------------+
 
 </pre>
 </div>
@@ -14983,6 +14983,7 @@ only showing top 20 rows
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p>The problem here is that a particular user will have multiple entries, since this is a database of user activities log. A user may have visitied number of other pages before reaching the "Cancellation" page. For a user that has churned, we want to make sure that all of his/her logs record 1 for the churn column. For this we will use the Window function from <code>sql.window</code>.</p>
+<p>For example, user <code>1749042</code> above has entries labeled as both churned (1) and not churned (0). We need to make sure that all of his/her entries are labeled as churned. It only takes that one "Cancellation Confirmation" to make a user churn.</p>
 
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
@@ -15023,7 +15024,7 @@ only showing top 20 rows
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[19]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">data</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;userId&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">125</span><span class="p">)</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s1">&#39;churn&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">data</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;userId&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1749042</span><span class="p">)</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s1">&#39;churn&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 
      </div>
@@ -15046,11 +15047,11 @@ only showing top 20 rows
 <pre>+-------+-----+
 |summary|churn|
 +-------+-----+
-|  count|    0|
-|   mean| null|
-| stddev| null|
-|    min| null|
-|    max| null|
+|  count| 1223|
+|   mean|  1.0|
+| stddev|  0.0|
+|    min|    1|
+|    max|    1|
 +-------+-----+
 
 </pre>
@@ -15989,6 +15990,216 @@ only showing top 2 rows
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[45]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">data</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">toPandas</span><span class="p">()</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[45]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userId</th>
+      <th>num_sessions</th>
+      <th>artist_count</th>
+      <th>avg_songs_played</th>
+      <th>playlist_length</th>
+      <th>add_friend</th>
+      <th>num_thumb_down</th>
+      <th>num_thumb_up</th>
+      <th>total_songs</th>
+      <th>lifetime</th>
+      <th>label</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1000280</td>
+      <td>22</td>
+      <td>767</td>
+      <td>48.666667</td>
+      <td>25</td>
+      <td>14</td>
+      <td>33</td>
+      <td>53</td>
+      <td>1317</td>
+      <td>77.303773</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1002185</td>
+      <td>17</td>
+      <td>1205</td>
+      <td>104.588235</td>
+      <td>49</td>
+      <td>25</td>
+      <td>14</td>
+      <td>92</td>
+      <td>2080</td>
+      <td>65.751053</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1017805</td>
+      <td>3</td>
+      <td>223</td>
+      <td>83.333333</td>
+      <td>5</td>
+      <td>13</td>
+      <td>4</td>
+      <td>7</td>
+      <td>320</td>
+      <td>54.266389</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1030587</td>
+      <td>11</td>
+      <td>1071</td>
+      <td>163.555556</td>
+      <td>46</td>
+      <td>23</td>
+      <td>16</td>
+      <td>66</td>
+      <td>1752</td>
+      <td>131.597523</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1033297</td>
+      <td>5</td>
+      <td>215</td>
+      <td>47.200000</td>
+      <td>7</td>
+      <td>4</td>
+      <td>3</td>
+      <td>10</td>
+      <td>299</td>
+      <td>116.144549</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>1057724</td>
+      <td>40</td>
+      <td>2157</td>
+      <td>98.641026</td>
+      <td>135</td>
+      <td>76</td>
+      <td>29</td>
+      <td>200</td>
+      <td>4669</td>
+      <td>96.044549</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>1059049</td>
+      <td>5</td>
+      <td>454</td>
+      <td>186.333333</td>
+      <td>16</td>
+      <td>10</td>
+      <td>6</td>
+      <td>29</td>
+      <td>662</td>
+      <td>133.714074</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>1069552</td>
+      <td>12</td>
+      <td>389</td>
+      <td>37.916667</td>
+      <td>11</td>
+      <td>7</td>
+      <td>6</td>
+      <td>26</td>
+      <td>582</td>
+      <td>126.268843</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>1071308</td>
+      <td>18</td>
+      <td>1007</td>
+      <td>82.882353</td>
+      <td>26</td>
+      <td>31</td>
+      <td>12</td>
+      <td>74</td>
+      <td>1693</td>
+      <td>63.393692</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>1076191</td>
+      <td>3</td>
+      <td>47</td>
+      <td>15.666667</td>
+      <td>1</td>
+      <td>0</td>
+      <td>1</td>
+      <td>4</td>
+      <td>64</td>
+      <td>28.905035</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[46]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">data</span><span class="o">.</span><span class="n">printSchema</span><span class="p">()</span>
 </pre></div>
 
@@ -16033,7 +16244,7 @@ only showing top 2 rows
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[46]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[47]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;label&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
@@ -16085,7 +16296,7 @@ only showing top 2 rows
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[47]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[48]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Vector assembler</span>
@@ -16108,7 +16319,7 @@ only showing top 2 rows
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[48]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[49]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s1">&#39;userID&#39;</span><span class="p">,</span> <span class="s1">&#39;unScaled_features&#39;</span><span class="p">,</span> <span class="s1">&#39;label&#39;</span><span class="p">)</span>
@@ -16159,7 +16370,7 @@ only showing top 2 rows
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[49]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[50]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># scale the features</span>
@@ -16215,7 +16426,7 @@ only showing top 2 rows
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[50]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[51]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># train test split</span>
@@ -16245,7 +16456,7 @@ only showing top 2 rows
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[51]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[52]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">pyspark.ml.classification</span> <span class="kn">import</span> <span class="n">GBTClassifier</span><span class="p">,</span> <span class="n">LogisticRegression</span><span class="p">,</span> <span class="n">LinearSVC</span><span class="p">,</span> <span class="n">RandomForestClassifier</span>
@@ -16268,7 +16479,7 @@ only showing top 2 rows
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[52]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[53]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># initialize classifier</span>
@@ -16311,16 +16522,16 @@ only showing top 2 rows
 <pre>+-------+-----+----------+
 | userID|label|prediction|
 +-------+-----+----------+
-|1017805|    0|       0.0|
-|1033297|    0|       0.0|
 |1057724|    0|       0.0|
-|1069552|    0|       0.0|
-|1071308|    1|       0.0|
-|1102913|    0|       0.0|
-|1114507|    0|       0.0|
-|1142513|    0|       0.0|
-|1190352|    0|       0.0|
-|1271218|    0|       0.0|
+|1059049|    0|       0.0|
+|1133196|    0|       0.0|
+|1151194|    0|       0.0|
+|1156065|    1|       0.0|
+|1311711|    1|       1.0|
+|1396378|    1|       0.0|
+|1507765|    0|       0.0|
+|1519090|    0|       0.0|
+|1528396|    1|       1.0|
 +-------+-----+----------+
 only showing top 10 rows
 
@@ -16344,7 +16555,7 @@ F1 Score: 0.81
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[53]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[54]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># initialize classifier</span>
@@ -16386,22 +16597,22 @@ F1 Score: 0.81
 <pre>+-------+-----+----------+
 | userID|label|prediction|
 +-------+-----+----------+
-|1017805|    0|       0.0|
-|1033297|    0|       0.0|
 |1057724|    0|       0.0|
-|1069552|    0|       0.0|
-|1071308|    1|       0.0|
-|1102913|    0|       0.0|
-|1114507|    0|       0.0|
-|1142513|    0|       0.0|
-|1190352|    0|       0.0|
-|1271218|    0|       0.0|
+|1059049|    0|       0.0|
+|1133196|    0|       0.0|
+|1151194|    0|       0.0|
+|1156065|    1|       0.0|
+|1311711|    1|       0.0|
+|1396378|    1|       0.0|
+|1507765|    0|       0.0|
+|1519090|    0|       0.0|
+|1528396|    1|       1.0|
 +-------+-----+----------+
 only showing top 10 rows
 
 Logistic Regression Metrics:
-Accuracy: 0.80
-F1 Score: 0.74
+Accuracy: 0.78
+F1 Score: 0.72
 </pre>
 </div>
 </div>
@@ -16419,7 +16630,7 @@ F1 Score: 0.74
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[63]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[55]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># initialize classifier</span>
@@ -16461,22 +16672,22 @@ F1 Score: 0.74
 <pre>+-------+-----+----------+
 | userID|label|prediction|
 +-------+-----+----------+
-|1017805|    0|       0.0|
-|1033297|    0|       0.0|
 |1057724|    0|       0.0|
-|1069552|    0|       0.0|
-|1071308|    1|       0.0|
-|1102913|    0|       0.0|
-|1114507|    0|       0.0|
-|1142513|    0|       0.0|
-|1190352|    0|       0.0|
-|1271218|    0|       0.0|
+|1059049|    0|       0.0|
+|1133196|    0|       0.0|
+|1151194|    0|       0.0|
+|1156065|    1|       0.0|
+|1311711|    1|       0.0|
+|1396378|    1|       0.0|
+|1507765|    0|       0.0|
+|1519090|    0|       0.0|
+|1528396|    1|       0.0|
 +-------+-----+----------+
 only showing top 10 rows
 
 Support Vector Machine Metrics:
 Accuracy: 0.77
-F1 Score: 0.67
+F1 Score: 0.66
 </pre>
 </div>
 </div>
@@ -16494,7 +16705,7 @@ F1 Score: 0.67
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[55]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[56]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">rf_classifier</span> <span class="o">=</span> <span class="n">RandomForestClassifier</span><span class="p">()</span>
@@ -16533,22 +16744,22 @@ F1 Score: 0.67
 <pre>+-------+-----+----------+
 | userID|label|prediction|
 +-------+-----+----------+
-|1017805|    0|       0.0|
-|1033297|    0|       0.0|
 |1057724|    0|       0.0|
-|1069552|    0|       0.0|
-|1071308|    1|       0.0|
-|1102913|    0|       0.0|
-|1114507|    0|       0.0|
-|1142513|    0|       0.0|
-|1190352|    0|       0.0|
-|1271218|    0|       0.0|
+|1059049|    0|       0.0|
+|1133196|    0|       0.0|
+|1151194|    0|       0.0|
+|1156065|    1|       0.0|
+|1311711|    1|       0.0|
+|1396378|    1|       0.0|
+|1507765|    0|       0.0|
+|1519090|    0|       0.0|
+|1528396|    1|       1.0|
 +-------+-----+----------+
 only showing top 10 rows
 
 Random Forest Metrics:
 Accuracy: 0.83
-F1 Score: 0.81
+F1 Score: 0.80
 </pre>
 </div>
 </div>
@@ -16563,7 +16774,7 @@ F1 Score: 0.81
 <p>From the four models above, Gradient Boosted Trees and Random Forest Classifier came out on top with:</p>
 <ul>
 <li>Accuracy: 0.83</li>
-<li>F1 Score: 0.81</li>
+<li>F1 Score: 0.81 and 0.80</li>
 </ul>
 
 </div>
@@ -16582,7 +16793,7 @@ F1 Score: 0.81
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[56]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[57]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">results_GradBoostTree</span> <span class="o">=</span> <span class="n">results_GradBoostTree</span><span class="o">.</span><span class="n">withColumnRenamed</span><span class="p">(</span><span class="s2">&quot;prediction&quot;</span><span class="p">,</span> <span class="s2">&quot;prediction_GBT&quot;</span><span class="p">)</span>
@@ -16614,26 +16825,26 @@ F1 Score: 0.81
 <pre>+-------+-----+--------------+--------------+--------------+-------------+
 | userID|label|prediction_GBT|prediction_LGR|prediction_SVC|prediction_RF|
 +-------+-----+--------------+--------------+--------------+-------------+
-|1017805|    0|           0.0|           0.0|           0.0|          0.0|
-|1033297|    0|           0.0|           0.0|           0.0|          0.0|
 |1057724|    0|           0.0|           0.0|           0.0|          0.0|
-|1069552|    0|           0.0|           0.0|           0.0|          0.0|
-|1071308|    1|           0.0|           0.0|           0.0|          0.0|
-|1102913|    0|           0.0|           0.0|           0.0|          0.0|
-|1114507|    0|           0.0|           0.0|           0.0|          0.0|
-|1142513|    0|           0.0|           0.0|           0.0|          0.0|
-|1190352|    0|           0.0|           0.0|           0.0|          0.0|
-|1271218|    0|           0.0|           0.0|           0.0|          0.0|
-|1333041|    0|           0.0|           0.0|           0.0|          0.0|
-|1380035|    0|           0.0|           0.0|           0.0|          0.0|
+|1059049|    0|           0.0|           0.0|           0.0|          0.0|
+|1133196|    0|           0.0|           0.0|           0.0|          0.0|
+|1151194|    0|           0.0|           0.0|           0.0|          0.0|
+|1156065|    1|           0.0|           0.0|           0.0|          0.0|
+|1311711|    1|           1.0|           0.0|           0.0|          0.0|
 |1396378|    1|           0.0|           0.0|           0.0|          0.0|
-|1447270|    1|           0.0|           0.0|           0.0|          1.0|
-|1452122|    0|           0.0|           0.0|           0.0|          0.0|
-|1500901|    0|           0.0|           0.0|           0.0|          0.0|
-|1517899|    1|           0.0|           0.0|           0.0|          0.0|
+|1507765|    0|           0.0|           0.0|           0.0|          0.0|
+|1519090|    0|           0.0|           0.0|           0.0|          0.0|
+|1528396|    1|           1.0|           1.0|           0.0|          1.0|
+|1537210|    0|           0.0|           0.0|           0.0|          0.0|
+|1567623|    0|           0.0|           0.0|           0.0|          0.0|
+|1612069|    0|           0.0|           0.0|           0.0|          0.0|
+|1617595|    1|           0.0|           0.0|           0.0|          0.0|
+|1624220|    0|           0.0|           0.0|           0.0|          0.0|
 |1627009|    1|           1.0|           1.0|           0.0|          1.0|
-|1699838|    0|           0.0|           0.0|           0.0|          0.0|
-|1734557|    0|           0.0|           0.0|           0.0|          0.0|
+|1633577|    0|           0.0|           0.0|           0.0|          0.0|
+|1770964|    0|           0.0|           0.0|           0.0|          0.0|
+|1782257|    0|           0.0|           0.0|           0.0|          0.0|
+|1796854|    0|           0.0|           0.0|           0.0|          0.0|
 +-------+-----+--------------+--------------+--------------+-------------+
 only showing top 20 rows
 
@@ -16654,7 +16865,7 @@ only showing top 20 rows
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[57]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[58]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">hybrid_function</span><span class="p">(</span><span class="n">prediction_GBT</span><span class="p">,</span> <span class="n">prediction_LGR</span><span class="p">,</span> <span class="n">prediction_SVM</span><span class="p">,</span> <span class="n">prediction_rf</span><span class="p">):</span>
@@ -16701,31 +16912,32 @@ only showing top 20 rows
 <pre>+-------+-----+--------------+--------------+--------------+-------------+----------+
 | userID|label|prediction_GBT|prediction_LGR|prediction_SVC|prediction_RF|prediction|
 +-------+-----+--------------+--------------+--------------+-------------+----------+
-|1017805|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
-|1033297|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
 |1057724|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
-|1069552|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
-|1071308|    1|           0.0|           0.0|           0.0|          0.0|       0.0|
-|1102913|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
-|1114507|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
-|1142513|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
-|1190352|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
-|1271218|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
-|1333041|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
-|1380035|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
+|1059049|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
+|1133196|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
+|1151194|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
+|1156065|    1|           0.0|           0.0|           0.0|          0.0|       0.0|
+|1311711|    1|           1.0|           0.0|           0.0|          0.0|       1.0|
 |1396378|    1|           0.0|           0.0|           0.0|          0.0|       0.0|
-|1447270|    1|           0.0|           0.0|           0.0|          1.0|       1.0|
-|1452122|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
-|1500901|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
-|1517899|    1|           0.0|           0.0|           0.0|          0.0|       0.0|
+|1507765|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
+|1519090|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
+|1528396|    1|           1.0|           1.0|           0.0|          1.0|       1.0|
+|1537210|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
+|1567623|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
+|1612069|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
+|1617595|    1|           0.0|           0.0|           0.0|          0.0|       0.0|
+|1624220|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
 |1627009|    1|           1.0|           1.0|           0.0|          1.0|       1.0|
-|1699838|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
-|1734557|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
+|1633577|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
+|1770964|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
+|1782257|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
+|1796854|    0|           0.0|           0.0|           0.0|          0.0|       0.0|
 +-------+-----+--------------+--------------+--------------+-------------+----------+
 only showing top 20 rows
 
+Hybrid Metrics:
 Accuracy: 0.83
-F1 Score: 0.82
+F1 Score: 0.81
 </pre>
 </div>
 </div>
@@ -16737,7 +16949,7 @@ F1 Score: 0.82
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>We were able to increase f1 score by 1% using the hybrid model, accuracy stayed the same.</p>
+<p>The f1 score and the accuracy stayed the same as the best model.</p>
 
 </div>
 </div>
